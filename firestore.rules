@@ -1,0 +1,115 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Auth helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isEmailVerified() {
+      // In this app, we'll allow signed in users for now as email verification 
+      // depends on the user confirming the link. 
+      // For production, this should be: return isSignedIn() && request.auth.token.email_verified == true;
+      return isSignedIn();
+    }
+
+    function getUserData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
+    }
+
+    function isRole(role) {
+      return isSignedIn() && (
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'vecino') == role) ||
+        (!exists(/databases/$(database)/documents/users/$(request.auth.uid)) && role == 'vecino')
+      );
+    }
+
+    // Permitir acceso total al desarrollador principal (tú)
+    function isDeveloper() {
+      return isSignedIn() && (
+        request.auth.token.email == 'underwadermendez@gmail.com' || 
+        request.auth.token.email == 'danim.0@gmail.com'
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // 1. Users Collection
+    match /users/{userId} {
+      allow read: if isSignedIn() && (
+        request.auth.uid == userId || 
+        isRole('admin') || 
+        isDeveloper() ||
+        (isRole('jefe_calle') && getUserData(request.auth.uid).street == resource.data.street)
+      );
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (request.auth.uid == userId || isRole('admin') || isDeveloper());
+      allow delete: if isSignedIn() && (request.auth.uid == userId || isRole('admin') || isDeveloper());
+    }
+
+    // 2. Census Collection (Households)
+    match /households/{householdId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() && (isRole('admin') || isRole('jefe_calle') || isDeveloper());
+      allow delete: if isSignedIn() && (isRole('admin') || isRole('jefe_calle') || isDeveloper());
+    }
+
+    // Reports Collection
+    match /reports/{reportId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (isRole('admin') || isRole('jefe_calle') || isDeveloper());
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isRole('admin') || isRole('jefe_calle') || isDeveloper());
+    }
+
+    // Messages Collection
+    match /messages/{messageId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow delete: if isSignedIn() && (resource.data.senderId == request.auth.uid || isRole('admin') || isRole('jefe_calle') || isDeveloper());
+    }
+
+    // Events Collection
+    match /events/{eventId} {
+      allow read: if isSignedIn();
+      allow create, delete: if isSignedIn() && (isRole('admin') || isRole('jefe_calle') || isDeveloper());
+      allow update: if isSignedIn(); 
+    }
+
+    // 4. Surveys Collection
+    match /surveys/{surveyId} {
+      allow read: if isSignedIn();
+      allow create, delete: if isSignedIn() && (isRole('admin') || isRole('jefe_calle') || isDeveloper());
+      allow update: if isSignedIn();
+    }
+
+    // 5. Repository Collection
+    match /repository/{docId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow delete: if isSignedIn() && (isRole('admin') || isRole('jefe_calle') || resource.data.authorId == request.auth.uid || isDeveloper());
+      allow update: if isSignedIn() && (isRole('admin') || isRole('jefe_calle') || isDeveloper());
+    }
+
+    // 6. Direct Messages (Private Chat)
+    match /direct_messages/{msgId} {
+      allow read: if isSignedIn() && (
+        request.auth.uid in resource.data.members ||
+        resource.data.senderId == request.auth.uid || 
+        resource.data.receiverId == request.auth.uid || 
+        isRole('admin') || 
+        isDeveloper()
+      );
+      allow create: if isSignedIn();
+      allow delete: if isSignedIn() && (resource.data.senderId == request.auth.uid || isRole('admin') || isDeveloper());
+    }
+  }
+}

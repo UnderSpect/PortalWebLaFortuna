@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>La Fortuna - Portal Comunal</title>
+    <meta name="description" content="Sistema integral de gestión para el Consejo Comunal La Fortuna, con paneles para administración, jefes de calle y vecinos." />
+    <meta property="og:title" content="La Fortuna - Portal Comunal" />
+    <meta property="og:description" content="Sistema integral de gestión para el Consejo Comunal La Fortuna, con paneles para administración, jefes de calle y vecinos." />
+    <meta property="og:type" content="website" />
+    <script>
+      // Force disable any HMR console errors or unhandled rejections from Vite WebSocket connection failures
+      (function() {
+        var NativeWebSocket = window.WebSocket;
+        if (NativeWebSocket) {
+          var WrappedWebSocket = function(url, protocols) {
+            // Safe detection for HMR web sockets (Vite connects to wss:// or ws:// on the same port or specifically /vite)
+            if (url && (url.indexOf('vite') !== -1 || url.indexOf('hmr') !== -1 || url.indexOf('localhost') !== -1 || url.indexOf('127.0.0.1') !== -1 || url.indexOf('3000') !== -1)) {
+              console.log('Skipped Vite HMR WebSocket connection to prevent connection errors.');
+              // Return a custom Mock WebSocket object representing a cleanly closed link
+              var mockWS = {
+                url: url,
+                readyState: 3, // CLOSED
+                bufferedAmount: 0,
+                extensions: '',
+                protocol: '',
+                binaryType: 'blob',
+                addEventListener: function(event, callback) {
+                  if (event === 'close') {
+                    setTimeout(function() {
+                      try {
+                        callback({
+                          wasClean: true,
+                          code: 1000,
+                          reason: "HMR disabled"
+                        });
+                      } catch(err) {}
+                    }, 50);
+                  }
+                },
+                removeEventListener: function() {},
+                send: function() {},
+                close: function() {},
+                dispatchEvent: function() { return true; }
+              };
+              return mockWS;
+            }
+
+            try {
+              var ws = new NativeWebSocket(url, protocols);
+              ws.addEventListener('error', function(e) {
+                console.log('Handled external WebSocket error gracefully.');
+              });
+              return ws;
+            } catch (err) {
+              console.warn('Fallback WebSocket creation failed:', err);
+              return {
+                addEventListener: function() {},
+                removeEventListener: function() {},
+                send: function() {},
+                close: function() {},
+                readyState: 3, // CLOSED
+              };
+            }
+          };
+          WrappedWebSocket.prototype = NativeWebSocket.prototype;
+          window.WebSocket = WrappedWebSocket;
+        }
+
+        // Avoid letting development-only benign WebSocket HMR connection errors cascade into UI crashes or overlay alerts in sandboxed environments
+        window.addEventListener('error', function(e) {
+          if (e.message && (e.message.indexOf('WebSocket') !== -1 || e.message.indexOf('websocket') !== -1 || e.message.indexOf('closed without opened') !== -1)) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }, true);
+        window.addEventListener('unhandledrejection', function(e) {
+          var reason = e.reason && (e.reason.message || String(e.reason));
+          if (reason && (reason.indexOf('WebSocket') !== -1 || reason.indexOf('websocket') !== -1 || reason.indexOf('closed without opened') !== -1)) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }, true);
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

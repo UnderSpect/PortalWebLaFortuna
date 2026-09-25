@@ -1,0 +1,105 @@
+{
+  "entities": {
+    "User": {
+      "title": "Usuario",
+      "description": "Información de perfil de usuario incluyendo rol y datos personales.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "firstName": { "type": "string" },
+        "secondName": { "type": "string" },
+        "firstSurname": { "type": "string" },
+        "secondSurname": { "type": "string" },
+        "cedula": { "type": "string" },
+        "phone": { "type": "string" },
+        "age": { "type": "number" },
+        "street": { "type": "string" },
+        "houseNumber": { "type": "string" },
+        "gender": { "type": "string", "enum": ["Masculino", "Femenino"] },
+        "role": { "type": "string", "enum": ["admin", "jefe_calle", "vecino"] },
+        "email": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "isBlocked": { "type": "boolean" },
+        "lockoutUntil": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "firstName", "firstSurname", "cedula", "role", "email"]
+    },
+    "CensusRecord": {
+      "title": "Censo",
+      "description": "Registro socio-económico de un vecino o carga familiar.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "registeredBy": { "type": "string" },
+        "street": { "type": "string" },
+        "situation": { "type": "string" },
+        "benefitsReceived": { "type": "array", "items": { "type": "string" } },
+        "lastUpdated": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "street"]
+    },
+    "Event": {
+      "title": "Evento",
+      "description": "Evento o jornada comunitaria.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "type": { "type": "string", "enum": ["evento", "jornada"] },
+        "createdBy": { "type": "string" }
+      }
+    },
+    "Survey": {
+      "title": "Encuesta",
+      "description": "Encuesta para la comunidad.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "question": { "type": "string" },
+        "options": { "type": "array", "items": { "type": "string" } },
+        "votes": { "type": "object" },
+        "expiresAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Document": {
+      "title": "Documento",
+      "description": "Archivo en el repositorio.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "url": { "type": "string" },
+        "size": { "type": "number" },
+        "type": { "type": "string" },
+        "uploadedBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Perfiles de usuario."
+    },
+    "/census/{censusId}": {
+      "schema": "CensusRecord",
+      "description": "Registros del censo."
+    },
+    "/events/{eventId}": {
+      "schema": "Event",
+      "description": "Eventos de la comunidad."
+    },
+    "/surveys/{surveyId}": {
+      "schema": "Survey",
+      "description": "Encuestas comunitarias."
+    },
+    "/documents/{docId}": {
+      "schema": "Document",
+      "description": "Repositorio de documentos."
+    }
+  }
+}
